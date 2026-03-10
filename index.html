@@ -324,12 +324,8 @@
             transition: width 0.5s ease;
         }
 
-        .bar-required {
-            background: #93c5fd;
-        }
-
         .bar-allocated {
-            background: var(--success);
+            background: #4f46e5;
         }
 
         .bar-label {
@@ -362,6 +358,7 @@
             width: 16px;
             height: 16px;
             border-radius: 4px;
+            background: #4f46e5;
         }
 
         #loading {
@@ -554,11 +551,7 @@
                 <div id="coverageBars"></div>
                 <div class="legend">
                     <div class="legend-item">
-                        <div class="legend-color bar-required"></div>
-                        <span>Required Hours</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color bar-allocated"></div>
+                        <div class="legend-color"></div>
                         <span>Allocated Hours</span>
                     </div>
                 </div>
@@ -579,9 +572,9 @@
             </div>
 
             <div class="card">
-                <h2>Decision Variables X (Fractions)</h2>
+                <h2>Decision Variables X (Percentages)</h2>
                 <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.875rem;">
-                    Fraction of each teacher's time allocated to each subject (0 to 1)
+                    Percentage of each teacher's time allocated to each subject (0% to 100%)
                 </p>
                 <div class="table-container">
                     <table id="fractionTable" class="result-table">
@@ -1116,14 +1109,12 @@
             coverageBars.innerHTML = '';
 
             subjects.forEach((s, i) => {
-                const reqWidth = (s.b / maxHours * 100);
-                const allocWidth = (result.allocated[i] / maxHours * 100);
+                const allocPct = s.b > 0 ? (result.allocated[i] / s.b * 100) : 0;
                 coverageBars.innerHTML += `
                     <div class="comparison-bar">
                         <div class="bar-label">${s.name}</div>
                         <div class="bar-container">
-                            <div class="bar-fill bar-required" style="width: ${reqWidth}%; position: absolute;"></div>
-                            <div class="bar-fill bar-allocated" style="width: ${allocWidth}%;"></div>
+                            <div class="bar-fill bar-allocated" style="width: ${Math.min(allocPct, 100)}%;"></div>
                         </div>
                         <div class="bar-value">${result.allocated[i]} / ${s.b}</div>
                     </div>
@@ -1155,7 +1146,7 @@
             tableHTML += '<td></td><td></td></tr></tbody>';
             resultTable.innerHTML = tableHTML;
 
-            // Fraction table (X values)
+            // Fraction table (X values as percentages)
             const fractionTable = document.getElementById('fractionTable');
             let fracHTML = '<thead><tr><th>Subject</th>';
             teachers.forEach(t => fracHTML += `<th>${t}</th>`);
@@ -1167,10 +1158,11 @@
                 teachers.forEach((_, j) => {
                     const x = result.X[i][j];
                     rowSum += x;
+                    const pct = Math.round(x * 100);
                     const cssClass = x > 0.001 ? 'optimal' : 'none';
-                    fracHTML += `<td class="${cssClass}">${x.toFixed(3)}</td>`;
+                    fracHTML += `<td class="${cssClass}">${pct}%</td>`;
                 });
-                fracHTML += `<td>${rowSum.toFixed(3)}</td></tr>`;
+                fracHTML += `<td>${Math.round(rowSum * 100)}%</td></tr>`;
             });
 
             // Teacher column sums
@@ -1178,8 +1170,9 @@
             teachers.forEach((_, j) => {
                 let colSum = 0;
                 subjects.forEach((_, i) => colSum += result.X[i][j]);
+                const pct = Math.round(colSum * 100);
                 const cssClass = colSum > 0.999 ? 'partial' : 'optimal';
-                fracHTML += `<td class="${cssClass}"><strong>${colSum.toFixed(3)}</strong></td>`;
+                fracHTML += `<td class="${cssClass}"><strong>${pct}%</strong></td>`;
             });
             fracHTML += '<td></td></tr></tbody>';
             fractionTable.innerHTML = fracHTML;
