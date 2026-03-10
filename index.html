@@ -431,6 +431,21 @@
             font-size: 0.875rem;
         }
 
+        .hours-row {
+            background: #e0e7ff;
+        }
+
+        .hours-row td {
+            font-weight: 600;
+        }
+
+        td input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 1rem;
@@ -587,6 +602,7 @@
 
     <script>
         let teachers = [];
+        let teacherHours = [];
         let subjects = [];
         let lastResult = null;
 
@@ -597,11 +613,12 @@
 
         function loadExample() {
             teachers = ['Teacher 1', 'Teacher 2', 'Teacher 3'];
+            teacherHours = [10, 10, 10];
             subjects = [
-                { name: 'Chemistry', b: 10, weight: 1, hours: [2, 0, 10] },
-                { name: 'Biology', b: 20, weight: 1, hours: [2, 5, 0] },
-                { name: 'Physics', b: 5, weight: 5, hours: [0, 5, 0] },
-                { name: 'English', b: 20, weight: 4, hours: [0, 0, 10] }
+                { name: 'Chemistry', b: 10, weight: 1, canTeach: [true, false, true] },
+                { name: 'Biology', b: 20, weight: 1, canTeach: [true, true, false] },
+                { name: 'Physics', b: 5, weight: 5, canTeach: [false, true, false] },
+                { name: 'English', b: 20, weight: 4, canTeach: [false, false, true] }
             ];
             renderTable();
         }
@@ -628,6 +645,21 @@
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
 
+            // Hours row for teachers
+            const hoursRow = document.createElement('tr');
+            hoursRow.className = 'hours-row';
+            hoursRow.innerHTML = `
+                <td><strong>Available Hours</strong></td>
+                <td></td>
+                <td></td>
+            `;
+            teachers.forEach((_, tIdx) => {
+                const td = document.createElement('td');
+                td.innerHTML = `<input type="number" min="0" value="${teacherHours[tIdx] || 0}" onchange="updateTeacherHours(${tIdx}, this.value)" style="font-weight: 600;">`;
+                hoursRow.appendChild(td);
+            });
+            tbody.appendChild(hoursRow);
+
             subjects.forEach((subject, sIdx) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -643,7 +675,13 @@
 
                 teachers.forEach((_, tIdx) => {
                     const td = document.createElement('td');
-                    td.innerHTML = `<input type="number" min="0" value="${subject.hours[tIdx] || 0}" onchange="updateHours(${sIdx}, ${tIdx}, this.value)">`;
+                    const canTeach = subject.canTeach[tIdx];
+                    td.innerHTML = `
+                        <label style="display: flex; align-items: center; justify-content: center; gap: 0.25rem; cursor: pointer;">
+                            <input type="checkbox" ${canTeach ? 'checked' : ''} onchange="updateCanTeach(${sIdx}, ${tIdx}, this.checked)">
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">${canTeach ? teacherHours[tIdx] : 0}h</span>
+                        </label>
+                    `;
                     tr.appendChild(td);
                 });
 
@@ -655,18 +693,27 @@
         function updateSubjectName(idx, value) { subjects[idx].name = value; }
         function updateSubjectB(idx, value) { subjects[idx].b = parseFloat(value) || 0; }
         function updateSubjectWeight(idx, value) { subjects[idx].weight = parseFloat(value) || 1; }
-        function updateHours(sIdx, tIdx, value) { subjects[sIdx].hours[tIdx] = parseFloat(value) || 0; }
+        function updateTeacherHours(tIdx, value) {
+            teacherHours[tIdx] = parseFloat(value) || 0;
+            renderTable();
+        }
+        function updateCanTeach(sIdx, tIdx, value) {
+            subjects[sIdx].canTeach[tIdx] = value;
+            renderTable();
+        }
 
         function addTeacher() {
             teachers.push(`Teacher ${teachers.length + 1}`);
-            subjects.forEach(s => s.hours.push(0));
+            teacherHours.push(10);
+            subjects.forEach(s => s.canTeach.push(false));
             renderTable();
         }
 
         function removeTeacher(idx) {
             if (teachers.length <= 1) { alert('Must have at least one teacher'); return; }
             teachers.splice(idx, 1);
-            subjects.forEach(s => s.hours.splice(idx, 1));
+            teacherHours.splice(idx, 1);
+            subjects.forEach(s => s.canTeach.splice(idx, 1));
             renderTable();
         }
 
@@ -675,7 +722,7 @@
                 name: `Subject ${subjects.length + 1}`,
                 b: 10,
                 weight: 1,
-                hours: teachers.map(() => 0)
+                canTeach: teachers.map(() => false)
             });
             renderTable();
         }
@@ -689,7 +736,8 @@
         function clearTable() {
             if (confirm('Clear all data?')) {
                 teachers = ['Teacher 1'];
-                subjects = [{ name: 'Subject 1', b: 10, weight: 1, hours: [0] }];
+                teacherHours = [10];
+                subjects = [{ name: 'Subject 1', b: 10, weight: 1, canTeach: [false] }];
                 renderTable();
                 document.getElementById('results').style.display = 'none';
             }
@@ -706,7 +754,7 @@
 
         function parseCSV(csvText) {
             const lines = csvText.trim().split('\n');
-            if (lines.length < 2) { alert('Invalid CSV format'); return; }
+            if (lines.length < 3) { alert('Invalid CSV format. Need header row, hours row, and at least one subject.'); return; }
 
             const headers = lines[0].split(',').map(h => h.trim());
             const subjectIdx = headers.indexOf('subject');
@@ -728,16 +776,24 @@
             });
 
             teachers = teacherNames;
+
+            // Parse hours row (second row)
+            const hoursValues = lines[1].split(',').map(v => v.trim());
+            teacherHours = teacherIndices.map(idx => parseFloat(hoursValues[idx]) || 0);
+
             subjects = [];
 
-            for (let i = 1; i < lines.length; i++) {
+            for (let i = 2; i < lines.length; i++) {
                 const values = lines[i].split(',').map(v => v.trim());
                 if (values.length < headers.length) continue;
                 subjects.push({
                     name: values[subjectIdx],
                     b: parseFloat(values[bIdx]) || 0,
                     weight: parseFloat(values[weightIdx]) || 1,
-                    hours: teacherIndices.map(idx => parseFloat(values[idx]) || 0)
+                    canTeach: teacherIndices.map(idx => {
+                        const val = values[idx].toLowerCase();
+                        return val === '1' || val === 'true' || val === 'yes' || val === 'x';
+                    })
                 });
             }
 
@@ -747,8 +803,9 @@
 
         function downloadInputCSV() {
             let csv = 'subject,b,weight,' + teachers.join(',') + '\n';
+            csv += `Hours,,,` + teacherHours.join(',') + '\n';
             subjects.forEach(s => {
-                csv += `${s.name},${s.b},${s.weight},${s.hours.join(',')}\n`;
+                csv += `${s.name},${s.b},${s.weight},${s.canTeach.map(c => c ? '1' : '0').join(',')}\n`;
             });
             downloadFile(csv, 'input.csv');
         }
@@ -890,7 +947,10 @@
             const s = subjects.length;
             const t = teachers.length;
 
-            const A = subjects.map(sub => [...sub.hours]);
+            // Build A matrix from teacherHours and canTeach
+            const A = subjects.map(sub =>
+                sub.canTeach.map((can, tIdx) => can ? teacherHours[tIdx] : 0)
+            );
             const b = subjects.map(sub => sub.b);
             const weights = subjects.map(sub => sub.weight);
 
