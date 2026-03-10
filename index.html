@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher-Subject Hour Allocation Optimizer</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card h2 {
+            color: var(--text);
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        button {
+            padding: 0.625rem 1.25rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--border);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-large {
+            padding: 1rem 2rem;
+            font-size: 1rem;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            background: var(--border);
+            color: var(--text);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .file-label:hover {
+            background: #cbd5e1;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        th.subject-col {
+            background: #6366f1;
+        }
+
+        td input {
+            width: 100%;
+            min-width: 60px;
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            text-align: center;
+            font-size: 0.875rem;
+        }
+
+        td input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        td input[type="text"] {
+            min-width: 80px;
+        }
+
+        .teacher-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+        }
+
+        .teacher-header input {
+            max-width: 80px;
+        }
+
+        .remove-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .info-box {
+            background: #e0e7ff;
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 1rem;
+        }
+
+        .info-box p {
+            margin: 0.25rem 0;
+            font-size: 0.875rem;
+        }
+
+        .math-box {
+            background: #fefce8;
+            border: 1px solid #fde047;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Times New Roman', serif;
+            margin-top: 1rem;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary) 0%, #6366f1 100%);
+            color: white;
+            padding: 1.25rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-card.success {
+            background: linear-gradient(135deg, var(--success) 0%, #34d399 100%);
+        }
+
+        .stat-card.warning {
+            background: linear-gradient(135deg, var(--warning) 0%, #fbbf24 100%);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .result-table th {
+            background: var(--success);
+        }
+
+        .result-table .optimal {
+            background: #d1fae5;
+            color: #065f46;
+            font-weight: 600;
+        }
+
+        .result-table .partial {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .result-table .none {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .comparison-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0.25rem 0;
+        }
+
+        .bar-container {
+            flex: 1;
+            height: 20px;
+            background: var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .bar-required {
+            background: #93c5fd;
+        }
+
+        .bar-allocated {
+            background: var(--success);
+        }
+
+        .bar-label {
+            min-width: 100px;
+            font-size: 0.875rem;
+        }
+
+        .bar-value {
+            min-width: 60px;
+            text-align: right;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .legend {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        #loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #results {
+            display: none;
+        }
+
+        .teacher-allocation {
+            margin-top: 1.5rem;
+        }
+
+        .teacher-card {
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .teacher-name {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .teacher-subjects {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .subject-badge {
+            background: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            border: 1px solid var(--border);
+        }
+
+        .subject-badge span {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            button, .file-label {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Teacher-Subject Hour Allocation</h1>
+        <p class="subtitle">Optimize teacher hours across subjects with constraints</p>
+
+        <div class="card">
+            <h2>Problem Description</h2>
+            <div class="info-box">
+                <p><strong>Goal:</strong> Optimally allocate teacher hours to subjects, prioritizing important subjects while respecting capacity constraints.</p>
+            </div>
+            <div class="math-box">
+                <p><strong>Variables:</strong></p>
+                <ul style="margin-left: 1rem; margin-bottom: 1rem;">
+                    <li>\(A \in \mathbb{R}^{s \times t}\) — max hours teacher \(j\) can teach subject \(i\)</li>
+                    <li>\(b \in \mathbb{R}^{s}\) — required hours per subject</li>
+                    <li>\(w \in \mathbb{R}^{s}\) — priority weights per subject</li>
+                    <li>\(X \in \mathbb{R}^{s \times t}\) — decision variable: fraction of teacher \(j\)'s capacity allocated to subject \(i\)</li>
+                    <li>\(\mathbf{1}\) — vector of ones</li>
+                </ul>
+                <p><strong>Linear Program:</strong></p>
+                <p style="text-align: center; font-size: 1.1em; margin: 1rem 0;">
+                    \[
+                    \begin{aligned}
+                    \max_{X} \quad & w^\top (A \circ X) \mathbf{1} \\[0.5em]
+                    \text{s.t.} \quad & (A \circ X) \mathbf{1} \leq b & \text{(no overbooking)} \\
+                    & X^\top \mathbf{1} \leq \mathbf{1} & \text{(teacher capacity)} \\
+                    & 0 \leq X \leq 1
+                    \end{aligned}
+                    \]
+                </p>
+                <p style="margin-top: 0.5rem; font-size: 0.9em; color: var(--text-muted);">
+                    where \(A \circ X\) denotes the Hadamard (elementwise) product.
+                </p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Input Data</h2>
+            <div class="button-group">
+                <label class="file-label">
+                    <span>Upload CSV</span>
+                    <input type="file" id="csvUpload" accept=".csv">
+                </label>
+                <button class="btn-secondary" onclick="downloadInputCSV()">Download Input CSV</button>
+                <button class="btn-secondary" onclick="loadExample()">Load Example</button>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="addSubject()">+ Add Subject</button>
+                <button class="btn-primary" onclick="addTeacher()">+ Add Teacher</button>
+                <button class="btn-danger" onclick="clearTable()">Clear All</button>
+            </div>
+
+            <div class="table-container">
+                <table id="inputTable">
+                    <thead>
+                        <tr id="headerRow">
+                            <th class="subject-col">Subject</th>
+                            <th>Required (b)</th>
+                            <th>Weight</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="text-align: center; margin-top: 1.5rem;">
+                <button class="btn-success btn-large" onclick="optimize()">Optimize Allocation</button>
+            </div>
+        </div>
+
+        <div id="loading">
+            <div class="spinner"></div>
+            <p>Solving Linear Program...</p>
+        </div>
+
+        <div id="results">
+            <div class="card">
+                <h2>Optimization Results</h2>
+
+                <div class="results-grid" id="statsGrid">
+                </div>
+
+                <h3 style="margin: 1.5rem 0 1rem;">Subject Coverage</h3>
+                <div id="coverageBars"></div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color bar-required"></div>
+                        <span>Required Hours</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color bar-allocated"></div>
+                        <span>Allocated Hours</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Allocation Matrix (Hours)</h2>
+                <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.875rem;">
+                    Hours allocated from each teacher to each subject: A<sub>i,j</sub> · X<sub>i,j</sub>
+                </p>
+                <div class="table-container">
+                    <table id="resultTable" class="result-table">
+                    </table>
+                </div>
+                <div class="button-group" style="margin-top: 1rem;">
+                    <button class="btn-secondary" onclick="downloadResultCSV()">Download Results CSV</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Decision Variables X (Fractions)</h2>
+                <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.875rem;">
+                    Fraction of each teacher's time allocated to each subject (0 to 1)
+                </p>
+                <div class="table-container">
+                    <table id="fractionTable" class="result-table">
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Teacher Assignments</h2>
+                <div id="teacherAllocations" class="teacher-allocation"></div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Teacher-Subject Hour Allocation Optimizer | Using javascript-lp-solver (Simplex Method)</p>
+        </footer>
+    </div>
+
+    <script>
+        let teachers = [];
+        let subjects = [];
+        let lastResult = null;
+
+        // Initialize with example data
+        document.addEventListener('DOMContentLoaded', () => {
+            loadExample();
+        });
+
+        function loadExample() {
+            teachers = ['Teacher 1', 'Teacher 2', 'Teacher 3'];
+            subjects = [
+                { name: 'Chemistry', b: 10, weight: 1, hours: [2, 0, 10] },
+                { name: 'Biology', b: 20, weight: 1, hours: [2, 5, 0] },
+                { name: 'Physics', b: 5, weight: 5, hours: [0, 5, 0] },
+                { name: 'English', b: 20, weight: 4, hours: [0, 0, 10] }
+            ];
+            renderTable();
+        }
+
+        function renderTable() {
+            const headerRow = document.getElementById('headerRow');
+            headerRow.innerHTML = `
+                <th class="subject-col">Subject</th>
+                <th>Required (b)</th>
+                <th>Weight</th>
+            `;
+
+            teachers.forEach((teacher, idx) => {
+                const th = document.createElement('th');
+                th.innerHTML = `
+                    <div class="teacher-header">
+                        <input type="text" value="${teacher}" onchange="updateTeacherName(${idx}, this.value)">
+                        <button class="remove-btn" onclick="removeTeacher(${idx})" title="Remove teacher">&times;</button>
+                    </div>
+                `;
+                headerRow.appendChild(th);
+            });
+
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            subjects.forEach((subject, sIdx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 0.25rem;">
+                            <input type="text" value="${subject.name}" onchange="updateSubjectName(${sIdx}, this.value)">
+                            <button class="remove-btn" onclick="removeSubject(${sIdx})" title="Remove subject">&times;</button>
+                        </div>
+                    </td>
+                    <td><input type="number" min="0" value="${subject.b}" onchange="updateSubjectB(${sIdx}, this.value)"></td>
+                    <td><input type="number" min="0" step="0.1" value="${subject.weight}" onchange="updateSubjectWeight(${sIdx}, this.value)"></td>
+                `;
+
+                teachers.forEach((_, tIdx) => {
+                    const td = document.createElement('td');
+                    td.innerHTML = `<input type="number" min="0" value="${subject.hours[tIdx] || 0}" onchange="updateHours(${sIdx}, ${tIdx}, this.value)">`;
+                    tr.appendChild(td);
+                });
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateTeacherName(idx, value) { teachers[idx] = value; }
+        function updateSubjectName(idx, value) { subjects[idx].name = value; }
+        function updateSubjectB(idx, value) { subjects[idx].b = parseFloat(value) || 0; }
+        function updateSubjectWeight(idx, value) { subjects[idx].weight = parseFloat(value) || 1; }
+        function updateHours(sIdx, tIdx, value) { subjects[sIdx].hours[tIdx] = parseFloat(value) || 0; }
+
+        function addTeacher() {
+            teachers.push(`Teacher ${teachers.length + 1}`);
+            subjects.forEach(s => s.hours.push(0));
+            renderTable();
+        }
+
+        function removeTeacher(idx) {
+            if (teachers.length <= 1) { alert('Must have at least one teacher'); return; }
+            teachers.splice(idx, 1);
+            subjects.forEach(s => s.hours.splice(idx, 1));
+            renderTable();
+        }
+
+        function addSubject() {
+            subjects.push({
+                name: `Subject ${subjects.length + 1}`,
+                b: 10,
+                weight: 1,
+                hours: teachers.map(() => 0)
+            });
+            renderTable();
+        }
+
+        function removeSubject(idx) {
+            if (subjects.length <= 1) { alert('Must have at least one subject'); return; }
+            subjects.splice(idx, 1);
+            renderTable();
+        }
+
+        function clearTable() {
+            if (confirm('Clear all data?')) {
+                teachers = ['Teacher 1'];
+                subjects = [{ name: 'Subject 1', b: 10, weight: 1, hours: [0] }];
+                renderTable();
+                document.getElementById('results').style.display = 'none';
+            }
+        }
+
+        // CSV handling
+        document.getElementById('csvUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(event) { parseCSV(event.target.result); };
+            reader.readAsText(file);
+        });
+
+        function parseCSV(csvText) {
+            const lines = csvText.trim().split('\n');
+            if (lines.length < 2) { alert('Invalid CSV format'); return; }
+
+            const headers = lines[0].split(',').map(h => h.trim());
+            const subjectIdx = headers.indexOf('subject');
+            const bIdx = headers.indexOf('b');
+            const weightIdx = headers.indexOf('weight');
+
+            if (subjectIdx === -1 || bIdx === -1 || weightIdx === -1) {
+                alert('CSV must contain columns: subject, b, weight');
+                return;
+            }
+
+            const teacherIndices = [];
+            const teacherNames = [];
+            headers.forEach((h, i) => {
+                if (!['subject', 'b', 'weight'].includes(h.toLowerCase())) {
+                    teacherIndices.push(i);
+                    teacherNames.push(h);
+                }
+            });
+
+            teachers = teacherNames;
+            subjects = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',').map(v => v.trim());
+                if (values.length < headers.length) continue;
+                subjects.push({
+                    name: values[subjectIdx],
+                    b: parseFloat(values[bIdx]) || 0,
+                    weight: parseFloat(values[weightIdx]) || 1,
+                    hours: teacherIndices.map(idx => parseFloat(values[idx]) || 0)
+                });
+            }
+
+            renderTable();
+            document.getElementById('results').style.display = 'none';
+        }
+
+        function downloadInputCSV() {
+            let csv = 'subject,b,weight,' + teachers.join(',') + '\n';
+            subjects.forEach(s => {
+                csv += `${s.name},${s.b},${s.weight},${s.hours.join(',')}\n`;
+            });
+            downloadFile(csv, 'input.csv');
+        }
+
+        function downloadResultCSV() {
+            if (!lastResult) return;
+            let csv = 'subject,' + teachers.join(',') + ',b,b_opt\n';
+            subjects.forEach((s, sIdx) => {
+                const allocated = teachers.map((_, tIdx) => lastResult.allocation[sIdx][tIdx]);
+                const bOpt = allocated.reduce((a, b) => a + b, 0);
+                csv += `${s.name},${allocated.join(',')},${s.b},${bOpt}\n`;
+            });
+            downloadFile(csv, 'results.csv');
+        }
+
+        function downloadFile(content, filename) {
+            const blob = new Blob([content], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        /*
+         * Embedded Simplex Solver for Linear Programming
+         * Solves: max c'x subject to Ax <= b, x >= 0
+         */
+        class SimplexSolver {
+            constructor() {
+                this.EPS = 1e-10;
+            }
+
+            solve(c, A, b) {
+                // c: objective coefficients (n)
+                // A: constraint matrix (m x n)
+                // b: constraint RHS (m)
+                // Returns: { x: solution, optimal: value, feasible: bool }
+
+                const m = A.length;      // number of constraints
+                const n = c.length;      // number of variables
+
+                // Build tableau with slack variables
+                // [A | I | b]
+                // [-c | 0 | 0]
+                const tableau = [];
+                for (let i = 0; i < m; i++) {
+                    const row = [...A[i]];
+                    for (let j = 0; j < m; j++) {
+                        row.push(i === j ? 1 : 0); // slack variables
+                    }
+                    row.push(b[i]); // RHS
+                    tableau.push(row);
+                }
+
+                // Objective row (negated for maximization)
+                const objRow = c.map(v => -v);
+                for (let j = 0; j < m; j++) objRow.push(0);
+                objRow.push(0);
+                tableau.push(objRow);
+
+                const totalCols = n + m + 1;
+                const basic = [];
+                for (let i = 0; i < m; i++) basic.push(n + i); // slack vars are basic
+
+                // Simplex iterations
+                const maxIter = 1000;
+                for (let iter = 0; iter < maxIter; iter++) {
+                    // Find pivot column (most negative in objective row)
+                    let pivotCol = -1;
+                    let minVal = -this.EPS;
+                    for (let j = 0; j < totalCols - 1; j++) {
+                        if (tableau[m][j] < minVal) {
+                            minVal = tableau[m][j];
+                            pivotCol = j;
+                        }
+                    }
+
+                    if (pivotCol === -1) break; // Optimal
+
+                    // Find pivot row (minimum ratio test)
+                    let pivotRow = -1;
+                    let minRatio = Infinity;
+                    for (let i = 0; i < m; i++) {
+                        if (tableau[i][pivotCol] > this.EPS) {
+                            const ratio = tableau[i][totalCols - 1] / tableau[i][pivotCol];
+                            if (ratio < minRatio) {
+                                minRatio = ratio;
+                                pivotRow = i;
+                            }
+                        }
+                    }
+
+                    if (pivotRow === -1) {
+                        return { x: new Array(n).fill(0), optimal: Infinity, feasible: false };
+                    }
+
+                    // Pivot
+                    basic[pivotRow] = pivotCol;
+                    const pivotVal = tableau[pivotRow][pivotCol];
+
+                    // Normalize pivot row
+                    for (let j = 0; j < totalCols; j++) {
+                        tableau[pivotRow][j] /= pivotVal;
+                    }
+
+                    // Eliminate column in other rows
+                    for (let i = 0; i <= m; i++) {
+                        if (i !== pivotRow) {
+                            const factor = tableau[i][pivotCol];
+                            for (let j = 0; j < totalCols; j++) {
+                                tableau[i][j] -= factor * tableau[pivotRow][j];
+                            }
+                        }
+                    }
+                }
+
+                // Extract solution
+                const x = new Array(n).fill(0);
+                for (let i = 0; i < m; i++) {
+                    if (basic[i] < n) {
+                        x[basic[i]] = tableau[i][totalCols - 1];
+                    }
+                }
+
+                return {
+                    x: x,
+                    optimal: tableau[m][totalCols - 1],
+                    feasible: true
+                };
+            }
+        }
+
+        // Optimization using embedded Simplex
+        function optimize() {
+            const s = subjects.length;
+            const t = teachers.length;
+
+            const A = subjects.map(sub => [...sub.hours]);
+            const b = subjects.map(sub => sub.b);
+            const weights = subjects.map(sub => sub.weight);
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+
+            setTimeout(() => {
+                const result = solveLP(A, b, weights, s, t);
+                lastResult = result;
+                displayResults(result);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('results').style.display = 'block';
+            }, 50);
+        }
+
+        function solveLP(A, b, weights, s, t) {
+            /*
+             * LP Formulation:
+             *
+             * Since y_i <= b_i (constraint), |y_i - b_i| = b_i - y_i
+             * So minimizing sum_i w_i |y_i - b_i| = maximizing sum_i w_i y_i
+             *
+             * Variables: X[i][j] in [0, 1] for each subject i, teacher j
+             * Flatten to vector x of length s*t
+             *
+             * Maximize: sum_{i,j} w_i * A[i][j] * X[i][j]
+             *
+             * Subject to:
+             *   sum_j A[i][j] * X[i][j] <= b[i]  for all subjects i
+             *   sum_i X[i][j] <= 1              for all teachers j
+             *   X[i][j] <= 1                    for all i, j
+             *   X[i][j] >= 0                    for all i, j
+             */
+
+            const numVars = s * t;
+            const idx = (i, j) => i * t + j;
+
+            // Objective: c[idx(i,j)] = w_i * A_ij
+            const c = new Array(numVars).fill(0);
+            for (let i = 0; i < s; i++) {
+                for (let j = 0; j < t; j++) {
+                    c[idx(i, j)] = weights[i] * A[i][j];
+                }
+            }
+
+            // Constraints
+            const constraintA = [];
+            const constraintB = [];
+
+            // Subject constraints: sum_j A[i][j] * X[i][j] <= b[i]
+            for (let i = 0; i < s; i++) {
+                const row = new Array(numVars).fill(0);
+                for (let j = 0; j < t; j++) {
+                    row[idx(i, j)] = A[i][j];
+                }
+                constraintA.push(row);
+                constraintB.push(b[i]);
+            }
+
+            // Teacher constraints: sum_i X[i][j] <= 1
+            for (let j = 0; j < t; j++) {
+                const row = new Array(numVars).fill(0);
+                for (let i = 0; i < s; i++) {
+                    row[idx(i, j)] = 1;
+                }
+                constraintA.push(row);
+                constraintB.push(1);
+            }
+
+            // Box constraints: X[i][j] <= 1
+            for (let i = 0; i < s; i++) {
+                for (let j = 0; j < t; j++) {
+                    const row = new Array(numVars).fill(0);
+                    row[idx(i, j)] = 1;
+                    constraintA.push(row);
+                    constraintB.push(1);
+                }
+            }
+
+            // Solve
+            const solver = new SimplexSolver();
+            const solution = solver.solve(c, constraintA, constraintB);
+
+            // Extract X matrix from solution
+            const X = [];
+            for (let i = 0; i < s; i++) {
+                X[i] = [];
+                for (let j = 0; j < t; j++) {
+                    X[i][j] = Math.max(0, solution.x[idx(i, j)] || 0);
+                }
+            }
+
+            // Compute allocation (hours): A[i][j] * X[i][j]
+            const allocation = [];
+            const allocated = [];
+            for (let i = 0; i < s; i++) {
+                allocation[i] = [];
+                let sum = 0;
+                for (let j = 0; j < t; j++) {
+                    const hours = A[i][j] * X[i][j];
+                    allocation[i][j] = Math.round(hours * 100) / 100; // Round to 2 decimals
+                    sum += hours;
+                }
+                allocated[i] = Math.round(sum * 100) / 100;
+            }
+
+            // Compute teacher totals
+            const teacherTotals = [];
+            for (let j = 0; j < t; j++) {
+                let sum = 0;
+                for (let i = 0; i < s; i++) {
+                    sum += allocation[i][j];
+                }
+                teacherTotals[j] = Math.round(sum * 100) / 100;
+            }
+
+            // Compute metrics
+            const totalRequired = b.reduce((a, c) => a + c, 0);
+            const totalAllocated = allocated.reduce((a, c) => a + c, 0);
+            let totalWeightedDeviation = 0;
+            for (let i = 0; i < s; i++) {
+                totalWeightedDeviation += weights[i] * Math.abs(allocated[i] - b[i]);
+            }
+
+            return {
+                X,
+                allocation,
+                allocated,
+                teacherTotals,
+                totalRequired,
+                totalAllocated: Math.round(totalAllocated * 100) / 100,
+                totalWeightedDeviation: Math.round(totalWeightedDeviation * 100) / 100,
+                coverage: totalRequired > 0 ? Math.round(totalAllocated / totalRequired * 10000) / 100 : 100,
+                feasible: solution.feasible
+            };
+        }
+
+        function displayResults(result) {
+            // Stats grid
+            const statsGrid = document.getElementById('statsGrid');
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${result.totalRequired}</div>
+                    <div class="stat-label">Total Required Hours</div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-value">${result.totalAllocated}</div>
+                    <div class="stat-label">Total Allocated Hours</div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-value">${result.coverage}%</div>
+                    <div class="stat-label">Coverage Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${result.totalWeightedDeviation}</div>
+                    <div class="stat-label">Weighted Deviation</div>
+                </div>
+            `;
+
+            // Coverage bars
+            const maxHours = Math.max(...subjects.map(s => s.b), ...result.allocated);
+            const coverageBars = document.getElementById('coverageBars');
+            coverageBars.innerHTML = '';
+
+            subjects.forEach((s, i) => {
+                const reqWidth = (s.b / maxHours * 100);
+                const allocWidth = (result.allocated[i] / maxHours * 100);
+                coverageBars.innerHTML += `
+                    <div class="comparison-bar">
+                        <div class="bar-label">${s.name}</div>
+                        <div class="bar-container">
+                            <div class="bar-fill bar-required" style="width: ${reqWidth}%; position: absolute;"></div>
+                            <div class="bar-fill bar-allocated" style="width: ${allocWidth}%;"></div>
+                        </div>
+                        <div class="bar-value">${result.allocated[i]} / ${s.b}</div>
+                    </div>
+                `;
+            });
+
+            // Result table (hours)
+            const resultTable = document.getElementById('resultTable');
+            let tableHTML = '<thead><tr><th>Subject</th>';
+            teachers.forEach(t => tableHTML += `<th>${t}</th>`);
+            tableHTML += '<th>Required (b)</th><th>Allocated (y)</th></tr></thead><tbody>';
+
+            subjects.forEach((s, i) => {
+                tableHTML += `<tr><td><strong>${s.name}</strong></td>`;
+                teachers.forEach((_, j) => {
+                    const hours = result.allocation[i][j];
+                    const cssClass = hours > 0 ? 'optimal' : 'none';
+                    tableHTML += `<td class="${cssClass}">${hours}</td>`;
+                });
+                const coverageClass = result.allocated[i] >= s.b ? 'optimal' :
+                                     (result.allocated[i] >= s.b * 0.5 ? 'partial' : 'none');
+                tableHTML += `<td>${s.b}</td><td class="${coverageClass}">${result.allocated[i]}</td></tr>`;
+            });
+
+            tableHTML += '<tr><td><strong>Teacher Total</strong></td>';
+            teachers.forEach((_, j) => {
+                tableHTML += `<td><strong>${result.teacherTotals[j]}</strong></td>`;
+            });
+            tableHTML += '<td></td><td></td></tr></tbody>';
+            resultTable.innerHTML = tableHTML;
+
+            // Fraction table (X values)
+            const fractionTable = document.getElementById('fractionTable');
+            let fracHTML = '<thead><tr><th>Subject</th>';
+            teachers.forEach(t => fracHTML += `<th>${t}</th>`);
+            fracHTML += '<th>Sum</th></tr></thead><tbody>';
+
+            subjects.forEach((s, i) => {
+                fracHTML += `<tr><td><strong>${s.name}</strong></td>`;
+                let rowSum = 0;
+                teachers.forEach((_, j) => {
+                    const x = result.X[i][j];
+                    rowSum += x;
+                    const cssClass = x > 0.001 ? 'optimal' : 'none';
+                    fracHTML += `<td class="${cssClass}">${x.toFixed(3)}</td>`;
+                });
+                fracHTML += `<td>${rowSum.toFixed(3)}</td></tr>`;
+            });
+
+            // Teacher column sums
+            fracHTML += '<tr><td><strong>Teacher Sum</strong></td>';
+            teachers.forEach((_, j) => {
+                let colSum = 0;
+                subjects.forEach((_, i) => colSum += result.X[i][j]);
+                const cssClass = colSum > 0.999 ? 'partial' : 'optimal';
+                fracHTML += `<td class="${cssClass}"><strong>${colSum.toFixed(3)}</strong></td>`;
+            });
+            fracHTML += '<td></td></tr></tbody>';
+            fractionTable.innerHTML = fracHTML;
+
+            // Teacher allocations
+            const teacherAllocations = document.getElementById('teacherAllocations');
+            teacherAllocations.innerHTML = '';
+
+            teachers.forEach((teacher, j) => {
+                const assignments = [];
+                subjects.forEach((s, i) => {
+                    if (result.allocation[i][j] > 0.01) {
+                        assignments.push({ name: s.name, hours: result.allocation[i][j] });
+                    }
+                });
+
+                if (assignments.length > 0) {
+                    let html = `<div class="teacher-card">
+                        <div class="teacher-name">${teacher} (${result.teacherTotals[j]} hours total)</div>
+                        <div class="teacher-subjects">`;
+                    assignments.forEach(a => {
+                        html += `<div class="subject-badge">${a.name}: <span>${a.hours}h</span></div>`;
+                    });
+                    html += '</div></div>';
+                    teacherAllocations.innerHTML += html;
+                }
+            });
+        }
+    </script>
+</body>
+</html>
